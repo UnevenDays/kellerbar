@@ -1,4 +1,4 @@
-import { CELLAR, createGame, placeEnemy, updateGame, type InputState, type Weapon } from './engine.ts'
+import { CELLAR, SHOWER, createGame, placeEnemy, updateGame, type InputState, type Weapon } from './engine.ts'
 
 function assert(cond: boolean, msg: string) {
   if (!cond) throw new Error(msg)
@@ -74,6 +74,39 @@ for (let i = 0; i < 50 && clear.phase === 'playing'; i++) {
   updateGame(clear, input(), 1 / 60)
 }
 assert(clear.phase === 'roundclear', `Runde endet nicht, phase=${clear.phase}`)
+
+const gift = createGame('bat', 0, 11)
+const insel = gift.enemies.find((enemy) => enemy.kind === 'insel')
+if (!insel) throw new Error('Insel fehlt in der Dusche')
+gift.player.x = insel.x - 50
+gift.player.y = insel.y
+gift.player.facing = 0
+for (let i = 0; i < 24; i++) updateGame(gift, input({ strike: i === 0 }), 1 / 60)
+assert(gift.bottles === 1, `Flasche fehlt, bottles=${gift.bottles}`)
+
+const poisoned = placeEnemy(gift, SHOWER.x + 80, SHOWER.y)
+gift.player.x = poisoned.x + 50
+gift.player.y = poisoned.y
+gift.player.facing = Math.PI
+gift.cooldown = 0
+gift.player.swingT = 0
+const before = gift.lockedTotal
+for (let i = 0; i < 90 && gift.lockedTotal === before; i++) {
+  updateGame(gift, input({ strike: i === 0 }), 1 / 60)
+}
+assert(gift.bottles === 0, 'Giftflasche wurde nicht verbraucht')
+assert(gift.lockedTotal === before + 1, `Dusche sperrt niemanden ein, locked=${gift.lockedTotal}`)
+
+const bald = gift.enemies.find((enemy) => enemy.kind === 'putin')
+if (!bald) throw new Error('Putinnn fehlt in der Box')
+gift.player.x = bald.x - 48
+gift.player.y = bald.y
+gift.player.facing = 0
+gift.cooldown = 0
+gift.player.swingT = 0
+const dizzyBefore = bald.dizzy
+for (let i = 0; i < 24; i++) updateGame(gift, input({ strike: i === 0 }), 1 / 60)
+assert(bald.dizzy > dizzyBefore, 'Putinnn lässt sich nicht schlagen')
 
 const over = createGame('bat', 10, 9)
 over.lives = 1

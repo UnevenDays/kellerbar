@@ -15,6 +15,7 @@ interface Hud {
   total: number
   phase: Phase
   combo: number
+  bottles: number
 }
 
 interface Stick {
@@ -38,6 +39,7 @@ function readHud(state: GameState): Hud {
     total: state.lockedTotal,
     phase: state.phase,
     combo: state.combo,
+    bottles: state.bottles,
   }
 }
 
@@ -80,6 +82,7 @@ export function GameScreen({
     total: 0,
     phase: 'playing',
     combo: 0,
+    bottles: 0,
   })
   const [paused, setPaused] = useState(false)
   const [muted, setMuted] = useState(false)
@@ -235,6 +238,7 @@ export function GameScreen({
           <p className="font-semibold">
             Keller {hud.locked}/{hud.goal}
           </p>
+          <p>Gift {hud.bottles}/5</p>
           {hud.combo > 1 ? <p>Kombo x{hud.combo}</p> : null}
         </div>
         <div className="flex gap-2">
@@ -319,7 +323,7 @@ export function GameScreen({
             <div className="panel">
               <h2 className="text-3xl font-black">Die Zylinder haben die Bar.</h2>
               <p className="mt-2">
-                Du hast {hud.total} Netanjahuuus in den Keller gesperrt.
+                Du hast {hud.total} Netanjahuuus in Keller oder Dusche gesperrt.
               </p>
               <p className="mt-1 font-semibold">
                 {hud.score.toLocaleString('de-DE')} Punkte

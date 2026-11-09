@@ -1,7 +1,7 @@
-import { CELLAR, WORLD, swingPose, type Enemy, type GameState, type Particle, type Player } from './engine.ts'
+import { BOXES, CELLAR, SHOWER, WORLD, swingPose, type Enemy, type GameState, type Particle, type Player } from './engine.ts'
 
-const MARGIN_STARS = buildStars(42, 1)
-const WALL_STARS = buildStars(28, 9)
+const MARGIN_STARS = buildStars(16, 1)
+const WALL_STARS = buildStars(7, 9)
 
 function buildStars(count: number, seed: number) {
   let n = seed >>> 0
@@ -115,8 +115,10 @@ function drawRoom(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.globalAlpha = 1
 
   drawBunting(ctx)
-  drawFloor(ctx, state)
-  drawCounter(ctx, state.elapsed)
+  drawFloor(ctx)
+  drawCounter(ctx)
+  drawShower(ctx)
+  drawBoxes(ctx)
   drawCellar(ctx, state)
   drawDoor(ctx, 34, 188)
   drawDoor(ctx, WORLD.w - 34, 188)
@@ -133,8 +135,12 @@ function drawRoom(ctx: CanvasRenderingContext2D, state: GameState) {
   for (const pop of state.popups) drawPopup(ctx, pop)
 
   if (state.hint && state.phase === 'playing') {
-    drawCaption(ctx, 'Benommen schlagen, dann in die Kellerluke schubsen.', true)
-  } else if (state.enemies.length === 0 && state.phase === 'playing' && state.toSpawn > 0) {
+    drawCaption(ctx, 'Dusche gibt Gift. Benommene in Keller oder Dusche.', true)
+  } else if (
+    state.phase === 'playing' &&
+    state.toSpawn > 0 &&
+    !state.enemies.some((enemy) => enemy.kind === 'netan')
+  ) {
     drawCaption(ctx, 'Die nächsten Netanjahuuus kommen zur Tür.', false)
   }
   if (state.phase === 'roundclear') drawBanner(ctx, 'Runde geschafft', 'Die Luke ist zu. Nächste Schicht.')
@@ -147,36 +153,31 @@ function drawBunting(ctx: CanvasRenderingContext2D) {
   ctx.moveTo(48, 34)
   ctx.quadraticCurveTo(WORLD.w / 2, 62, WORLD.w - 48, 34)
   ctx.stroke()
-  for (let i = 0; i < 11; i++) {
-    const t = i / 10
+  for (let i = 0; i < 6; i++) {
+    const t = i / 5
     const x = 48 + (WORLD.w - 96) * t
     const y = 34 + Math.sin(t * Math.PI) * 28
     drawStar(ctx, x, y + 10, i % 2 === 0 ? 7 : 5, i % 2 === 0 ? '#f8fbff' : '#93c5fd')
   }
 }
 
-function drawFloor(ctx: CanvasRenderingContext2D, state: GameState) {
+function drawFloor(ctx: CanvasRenderingContext2D) {
   round(ctx, 28, 124, WORLD.w - 56, WORLD.h - 152, 22)
   const floor = ctx.createLinearGradient(0, 124, 0, WORLD.h)
-  floor.addColorStop(0, '#2f6fe0')
-  floor.addColorStop(1, '#1a4fbe')
+  floor.addColorStop(0, '#2a66d4')
+  floor.addColorStop(1, '#1d4ed8')
   ctx.fillStyle = floor
   ctx.fill()
 
   ctx.save()
   round(ctx, 28, 124, WORLD.w - 56, WORLD.h - 152, 22)
   ctx.clip()
-  const tile = 46
+  const tile = 64
   for (let y = 124; y < WORLD.h - 20; y += tile) {
     for (let x = 28; x < WORLD.w - 20; x += tile) {
       const alt = ((x / tile) | 0) + ((y / tile) | 0)
-      ctx.fillStyle = alt % 2 === 0 ? 'rgba(248,251,255,0.08)' : 'rgba(7,20,51,0.13)'
-      ctx.fillRect(x, y, tile - 2, tile - 2)
-      if (alt % 5 === 0) {
-        ctx.globalAlpha = 0.28 + Math.sin(state.elapsed * 1.5 + x) * 0.08
-        drawStar(ctx, x + 18, y + 18, 5, '#f8fbff')
-        ctx.globalAlpha = 1
-      }
+      ctx.fillStyle = alt % 2 === 0 ? 'rgba(248,251,255,0.07)' : 'rgba(7,20,51,0.08)'
+      ctx.fillRect(x, y, tile, tile)
     }
   }
   ctx.restore()
@@ -188,7 +189,7 @@ function drawFloor(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.restore()
 }
 
-function drawCounter(ctx: CanvasRenderingContext2D, time: number) {
+function drawCounter(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = 'rgba(7,20,51,0.25)'
   ctx.fillRect(58, 118, 684, 14)
   round(ctx, 52, 48, 696, 76, 16)
@@ -206,38 +207,19 @@ function drawCounter(ctx: CanvasRenderingContext2D, time: number) {
   ctx.fillText('KELLERBAR', 70, 74)
   ctx.font = '600 12px "Geist Variable", sans-serif'
   ctx.fillStyle = '#1d4ed8'
-  ctx.fillText('weiß · blau · sterne', 196, 74)
+  ctx.fillText('weiß · blau', 196, 74)
 
-  for (let i = 0; i < 8; i++) {
-    const x = 430 + i * 34
-    const h = 24 + (i % 3) * 8
-    const y = 92 - h
-    round(ctx, x, y, 16, h, 5)
-    ctx.fillStyle = i % 2 === 0 ? '#1d4ed8' : '#f8fbff'
+  for (let i = 0; i < 4; i++) {
+    const x = 520 + i * 42
+    const h = 28
+    const y = 90 - h
+    round(ctx, x, y, 14, h, 4)
+    ctx.fillStyle = i === 1 ? '#86efac' : '#f8fbff'
     ctx.fill()
-    ctx.strokeStyle = '#0c1b45'
+    ctx.strokeStyle = '#1d4ed8'
     ctx.lineWidth = 1.5
     ctx.stroke()
-    ctx.fillStyle = i % 2 === 0 ? '#dbeafe' : '#1d4ed8'
-    ctx.fillRect(x, y + 6, 16, 4)
   }
-
-  for (let i = 0; i < 3; i++) {
-    const x = 340 + i * 26
-    ctx.strokeStyle = '#1d4ed8'
-    ctx.fillStyle = '#e8f1ff'
-    ctx.beginPath()
-    ctx.ellipse(x, 86, 10, 6, 0, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.stroke()
-    ctx.beginPath()
-    ctx.arc(x, 78, 8, Math.PI, 0)
-    ctx.stroke()
-  }
-
-  ctx.globalAlpha = 0.35 + Math.sin(time * 2) * 0.15
-  drawStar(ctx, 400, 40, 8, '#ffffff')
-  ctx.globalAlpha = 1
 }
 
 function drawDoor(ctx: CanvasRenderingContext2D, x: number, y: number) {
@@ -251,6 +233,66 @@ function drawDoor(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.stroke()
   drawStar(ctx, 0, 0, 7, '#f8fbff')
   ctx.restore()
+}
+
+function drawShower(ctx: CanvasRenderingContext2D) {
+  ctx.save()
+  ctx.translate(SHOWER.x, SHOWER.y)
+  round(ctx, -62, -78, 124, 150, 16)
+  ctx.fillStyle = '#f8fbff'
+  ctx.fill()
+  ctx.strokeStyle = '#1d4ed8'
+  ctx.lineWidth = 3
+  ctx.stroke()
+  ctx.fillStyle = '#dbeafe'
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 3; col++) ctx.fillRect(-48 + col * 32, -58 + row * 28, 28, 24)
+  }
+  ctx.fillStyle = '#1d4ed8'
+  ctx.fillRect(-8, -72, 16, 10)
+  ctx.beginPath()
+  ctx.arc(0, -58, 8, 0, Math.PI)
+  ctx.fill()
+  ctx.strokeStyle = '#93c5fd'
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(-4, -50)
+  ctx.lineTo(-8, -28)
+  ctx.moveTo(4, -50)
+  ctx.lineTo(8, -30)
+  ctx.stroke()
+  ctx.fillStyle = 'rgba(29,78,216,0.72)'
+  ctx.fillRect(28, -78, 34, 150)
+  ctx.fillStyle = '#1d4ed8'
+  ctx.font = '700 13px "Geist Variable", sans-serif'
+  ctx.textAlign = 'center'
+  ctx.fillText('DUSCHE', 0, 60)
+  ctx.restore()
+}
+
+function drawBoxes(ctx: CanvasRenderingContext2D) {
+  for (const box of BOXES) {
+    ctx.save()
+    ctx.translate(box.x, box.y)
+    round(ctx, -40, -46, 80, 86, 8)
+    ctx.fillStyle = '#f8fbff'
+    ctx.fill()
+    ctx.strokeStyle = '#1d4ed8'
+    ctx.lineWidth = 3
+    ctx.stroke()
+    ctx.strokeStyle = '#93c5fd'
+    ctx.beginPath()
+    ctx.moveTo(-40, -8)
+    ctx.lineTo(40, -8)
+    ctx.moveTo(0, -46)
+    ctx.lineTo(0, 40)
+    ctx.stroke()
+    ctx.fillStyle = '#1d4ed8'
+    ctx.font = '700 11px "Geist Variable", sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillText('BOX', 0, 32)
+    ctx.restore()
+  }
 }
 
 function drawCellar(ctx: CanvasRenderingContext2D, state: GameState) {
@@ -328,7 +370,8 @@ function drawPlayer(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.save()
   ctx.globalAlpha = blink ? 0.45 : 1
   shadow(ctx, p.x, p.y)
-  drawBody(ctx, p.x, p.y, false, 0, state.elapsed, p.facing, false, '#1d4ed8')
+  drawBody(ctx, p.x, p.y, 'player', 0, state.elapsed, p.facing, false, '#1d4ed8')
+  if (state.bottles > 0) drawFlask(ctx, p.x - 18, p.y - 6)
   if (p.swingT <= 0) drawAim(ctx, p)
   drawWeapon(ctx, state)
   ctx.restore()
@@ -357,24 +400,37 @@ function drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy, state: GameState) {
   ctx.scale(scale, scale)
   ctx.translate(-e.x, -(e.y + bob))
   shadow(ctx, e.x, e.y + bob)
+  const tone = e.kind === 'insel' ? '#1e3a5f' : e.kind === 'putin' ? '#334155' : e.shade > 0.5 ? '#1e3a8a' : '#2563eb'
   drawBody(
     ctx,
     e.x,
     e.y + bob,
-    true,
+    e.kind,
     e.tilt + (e.dizzy > 0 ? Math.sin(state.elapsed * 8) * 0.2 : 0),
     state.elapsed + e.phase,
     0,
     e.dizzy > 0,
-    e.shade > 0.5 ? '#1e3a8a' : '#2563eb',
+    tone,
   )
+  if (e.poison > 0 && !e.sucking) {
+    for (let i = 0; i < 3; i++) {
+      const a = state.elapsed * 5 + i * 2
+      ctx.fillStyle = '#4ade80'
+      ctx.globalAlpha = 0.75
+      ctx.beginPath()
+      ctx.arc(e.x + Math.cos(a) * 16, e.y + bob - 20 + Math.sin(a) * 8, 3, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.globalAlpha = 1
+    }
+  }
   if (e.dizzy > 0 && !e.sucking) {
     for (let i = 0; i < 3; i++) {
       const a = state.elapsed * 6 + i * 2.1
       drawStar(ctx, e.x + Math.cos(a) * 24, e.y + bob - 36 + Math.sin(a) * 7, 4.5, '#f8fbff')
     }
   }
-  drawName(ctx, e.x, e.y + bob - 58)
+  const plate = e.kind === 'insel' ? 'Insel' : e.kind === 'putin' ? 'Putinnn' : 'Netanjahuuu'
+  drawName(ctx, e.x, e.y + bob - 58, plate)
   ctx.restore()
 }
 
@@ -382,7 +438,7 @@ function drawBody(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
-  hat: boolean,
+  look: 'player' | Enemy['kind'],
   tilt: number,
   time: number,
   facing: number,
@@ -400,19 +456,25 @@ function drawBody(
   ctx.fill()
 
   round(ctx, x - 14, y - 8, 28, 24, 8)
-  ctx.fillStyle = hat ? tone : '#f8fbff'
+  ctx.fillStyle = look === 'player' ? '#f8fbff' : tone
   ctx.fill()
-  ctx.strokeStyle = hat ? '#dbeafe' : '#1d4ed8'
+  ctx.strokeStyle = look === 'player' ? '#1d4ed8' : '#dbeafe'
   ctx.lineWidth = 2
   ctx.stroke()
-  if (!hat) {
+  if (look === 'player') {
     ctx.fillStyle = '#1d4ed8'
     ctx.fillRect(x - 3, y - 8, 6, 24)
     drawStar(ctx, x, y + 2, 4, '#1d4ed8')
+  } else if (look === 'insel') {
+    ctx.fillStyle = '#f8fbff'
+    ctx.fillRect(x - 14, y - 2, 28, 4)
+    ctx.fillRect(x - 4, y - 6, 8, 16)
+    ctx.fillStyle = '#86efac'
+    ctx.fillRect(x - 14, y + 8, 28, 4)
   } else {
     ctx.fillStyle = '#f8fbff'
     ctx.fillRect(x - 4, y - 6, 8, 16)
-    ctx.fillStyle = '#dbeafe'
+    ctx.fillStyle = look === 'putin' ? '#cbd5e1' : '#dbeafe'
     ctx.fillRect(x - 14, y + 6, 28, 5)
   }
 
@@ -420,14 +482,14 @@ function drawBody(
   ctx.beginPath()
   ctx.arc(x, y - 18, 13, 0, Math.PI * 2)
   ctx.fill()
-  if (!hat) {
+  if (look === 'player') {
     ctx.fillStyle = '#1a2744'
     ctx.beginPath()
     ctx.arc(x, y - 24, 12, Math.PI, 0)
     ctx.fill()
   }
 
-  const look = hat ? 0 : Math.cos(facing) * 2
+  const glance = look === 'player' ? Math.cos(facing) * 2 : 0
   if (dizzy) {
     ctx.strokeStyle = '#0c1b45'
     ctx.lineWidth = 1.6
@@ -440,8 +502,8 @@ function drawBody(
   } else {
     ctx.fillStyle = '#0c1b45'
     ctx.beginPath()
-    ctx.arc(x - 4 + look, y - 18, 1.7, 0, Math.PI * 2)
-    ctx.arc(x + 4 + look, y - 18, 1.7, 0, Math.PI * 2)
+    ctx.arc(x - 4 + glance, y - 18, 1.7, 0, Math.PI * 2)
+    ctx.arc(x + 4 + glance, y - 18, 1.7, 0, Math.PI * 2)
     ctx.fill()
     ctx.strokeStyle = '#0c1b45'
     ctx.lineWidth = 1.5
@@ -457,7 +519,37 @@ function drawBody(
   ctx.beginPath()
   ctx.arc(x, y - 13, 4, 0.2, Math.PI - 0.2)
   ctx.stroke()
-  if (hat) drawTopHat(ctx, x, y - 30, tilt)
+  if (look === 'insel') {
+    ctx.fillStyle = '#3a2a22'
+    ctx.fillRect(x - 8, y - 14, 16, 3)
+    ctx.fillRect(x - 9, y - 16, 3, 5)
+    ctx.fillRect(x + 6, y - 16, 3, 5)
+    drawCap(ctx, x, y - 28)
+  } else if (look === 'netan') {
+    drawTopHat(ctx, x, y - 30, tilt)
+  }
+}
+
+function drawCap(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  ctx.fillStyle = '#0f2744'
+  ctx.beginPath()
+  ctx.ellipse(x, y + 4, 14, 5, 0, 0, Math.PI * 2)
+  ctx.fill()
+  round(ctx, x - 9, y - 10, 18, 14, 4)
+  ctx.fill()
+  ctx.fillStyle = '#f8fbff'
+  ctx.fillRect(x - 9, y + 1, 18, 2)
+}
+
+function drawFlask(ctx: CanvasRenderingContext2D, x: number, y: number) {
+  round(ctx, x - 5, y - 8, 10, 16, 3)
+  ctx.fillStyle = '#4ade80'
+  ctx.fill()
+  ctx.strokeStyle = '#14532d'
+  ctx.lineWidth = 1.5
+  ctx.stroke()
+  ctx.fillStyle = '#14532d'
+  ctx.fillRect(x - 2, y - 12, 4, 5)
 }
 
 function drawTopHat(ctx: CanvasRenderingContext2D, x: number, y: number, tilt: number) {
@@ -478,8 +570,7 @@ function drawTopHat(ctx: CanvasRenderingContext2D, x: number, y: number, tilt: n
   ctx.restore()
 }
 
-function drawName(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  const text = 'Netanjahuuu'
+function drawName(ctx: CanvasRenderingContext2D, x: number, y: number, text: string) {
   ctx.font = '700 11px "Geist Variable", sans-serif'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'

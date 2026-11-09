@@ -11,7 +11,7 @@ const WEAPONS: Array<{
   {
     id: 'bat',
     title: 'Baseballschläger',
-    text: 'Kurzer Schwung. Wirft Netanjahuuus in Blickrichtung. Stell die Kellerluke dahinter.',
+    text: 'Kurzer Schwung. Wirft Netanjahuuus in Blickrichtung. Luke oder Dusche dahinter stellen.',
     icon: BatIcon,
   },
   {
@@ -42,13 +42,14 @@ export function MenuScreen({
         </p>
         <h1 className="text-4xl font-black tracking-tight sm:text-5xl">Kellerbar</h1>
         <p className="mt-3 text-base leading-relaxed text-[#243868]">
-          Die Bar ist weiß und blau, Sterne hängen um die Theke. Die Netanjahuuus mit Zylinderhut wollen
-          sie übernehmen. Schlag sie benommen und sperr sie durch die Kellerluke.
+          Die Bar ist weiß und blau. In der Dusche stehen Männer mit Schnurrbart und Uniform, Namensschild Insel.
+          Ein Treffer gibt eine Giftflasche. Vergiftete Netanjahuuus taumeln in die Dusche. In den Boxen stehen
+          glatzköpfige Putinnn, die du ebenfalls schlagen kannst.
         </p>
         <ol className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
-          <li className="rounded-2xl bg-white/80 px-3 py-2">1. Waffe wählen</li>
-          <li className="rounded-2xl bg-white/80 px-3 py-2">2. Zylinder benommen schlagen</li>
-          <li className="rounded-2xl bg-white/80 px-3 py-2">3. In die Luke schubsen</li>
+          <li className="rounded-2xl bg-white/80 px-3 py-2">1. Insel schlagen, Flasche nehmen</li>
+          <li className="rounded-2xl bg-white/80 px-3 py-2">2. Netanjahuuu vergiften</li>
+          <li className="rounded-2xl bg-white/80 px-3 py-2">3. In Dusche oder Keller sperren</li>
         </ol>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {WEAPONS.map((item) => {

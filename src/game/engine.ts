@@ -1,8 +1,15 @@
 export const WORLD = { w: 800, h: 600 }
 export const FLOOR = { left: 46, right: 754, top: 176, bottom: 552 }
-export const CELLAR = { x: 400, y: 492, r: 40 }
+export const CELLAR = { x: 400, y: 500, r: 40 }
+export const SHOWER = { x: 146, y: 292, r: 58 }
+export const BOXES = [
+  { x: 668, y: 262 },
+  { x: 668, y: 372 },
+] as const
 
 export type Weapon = 'bat' | 'whip'
+export type Crew = 'netan' | 'insel' | 'putin'
+export type LockSpot = 'cellar' | 'shower'
 export type Phase = 'playing' | 'roundclear' | 'gameover'
 
 export interface InputState {
@@ -34,6 +41,14 @@ export interface Enemy {
   hitSwing: number
   shade: number
   reel: number
+  reelTo: LockSpot
+  kind: Crew
+  homeX: number
+  homeY: number
+  poison: number
+  toxin: number
+  bottleCd: number
+  lockSpot: LockSpot
 }
 
 export interface Player {
@@ -99,11 +114,14 @@ export interface GameState {
   particles: Particle[]
   popups: Popup[]
   cellarSlam: number
+  bottles: number
 }
 
 export type GameEvent =
   | { type: 'swing'; weapon: Weapon }
   | { type: 'hit'; weapon: Weapon }
+  | { type: 'bottle' }
+  | { type: 'poison' }
   | { type: 'lock'; combo: number }
   | { type: 'hurt' }
   | { type: 'clear'; round: number }
@@ -163,6 +181,7 @@ export function beginRound(s: GameState, round: number) {
   s.phase = 'playing'
   s.banner = 0
   s.enemies = []
+  placeFixtures(s)
 }
 
 export function createGame(weapon: Weapon, best: number, seed = 0x4b454c4c): GameState {
@@ -205,12 +224,27 @@ export function createGame(weapon: Weapon, best: number, seed = 0x4b454c4c): Gam
     particles: [],
     popups: [],
     cellarSlam: 0,
+    bottles: 0,
   }
   beginRound(state, 1)
   return state
 }
 
-export function placeEnemy(s: GameState, x: number, y: number, vx = 0, vy = 0): Enemy {
+function placeFixtures(s: GameState) {
+  const spots: Array<{ kind: Crew; x: number; y: number }> = [
+    { kind: 'insel', x: 118, y: 258 },
+    { kind: 'insel', x: 172, y: 324 },
+    { kind: 'putin', x: BOXES[0].x, y: BOXES[0].y },
+    { kind: 'putin', x: BOXES[1].x, y: BOXES[1].y },
+  ]
+  for (const spot of spots) {
+    const enemy = placeEnemy(s, spot.x, spot.y, 0, 0, spot.kind)
+    enemy.homeX = spot.x
+    enemy.homeY = spot.y
+  }
+}
+
+export function placeEnemy(s: GameState, x: number, y: number, vx = 0, vy = 0, kind: Crew = 'netan'): Enemy {
   const enemy: Enemy = {
     id: s.nextId++,
     x,
@@ -230,6 +264,14 @@ export function placeEnemy(s: GameState, x: number, y: number, vx = 0, vy = 0): 
     hitSwing: -1,
     shade: rnd(s),
     reel: 0,
+    reelTo: 'cellar',
+    kind,
+    homeX: x,
+    homeY: y,
+    poison: 0,
+    toxin: 0,
+    bottleCd: 0,
+    lockSpot: 'cellar',
   }
   s.enemies.push(enemy)
   return enemy
@@ -266,40 +308,79 @@ function startSwing(s: GameState, events: GameEvent[]) {
   )
 }
 
+function shove(e: Enemy, x: number, y: number, speed: number) {
+  const dx = x - e.x
+  const dy = y - e.y
+  const d = Math.hypot(dx, dy) || 1
+  e.vx = (dx / d) * speed
+  e.vy = (dy / d) * speed
+}
+
 function connectHit(s: GameState, e: Enemy, events: GameEvent[]) {
   const weapon = s.player.swingWeapon
   const wasDizzy = e.dizzy > 0.15
   e.hitSwing = s.player.swingId
-  e.dizzy = Math.max(e.dizzy, weapon === 'bat' ? 2.7 : 3.2)
   e.flash = 0.16
   e.tilt = (rnd(s) - 0.5) * 1.1
   e.enter = 0
-  if (weapon === 'bat') {
+  if (e.kind === 'insel') {
+    e.dizzy = Math.max(e.dizzy, 0.7)
+    shove(e, e.homeX, e.homeY, 80)
+    if (e.bottleCd <= 0) {
+      s.bottles = Math.min(5, s.bottles + 1)
+      e.bottleCd = 3.4
+      s.score += 20
+      popup(s, e.x, e.y - 46, 'FLASCHE')
+      events.push({ type: 'bottle' })
+      burst(s, e.x, e.y - 8, 8, ['#86efac', '#bbf7d0', '#f8fbff'])
+    }
+    events.push({ type: 'hit', weapon })
+    return
+  }
+
+  const poison = s.bottles > 0
+  if (poison) {
+    s.bottles -= 1
+    e.poison = Math.max(e.poison, 3.6)
+    e.toxin = 0
+    events.push({ type: 'poison' })
+    burst(s, e.x, e.y - 8, 8, ['#4ade80', '#86efac', '#bbf7d0'])
+  }
+  e.dizzy = Math.max(e.dizzy, weapon === 'bat' ? 2.7 : 3.2)
+  if (e.kind === 'putin') {
     e.reel = 0
+    if (weapon === 'bat') {
+      e.vx = Math.cos(s.player.swingFacing) * 420
+      e.vy = Math.sin(s.player.swingFacing) * 420
+    } else {
+      shove(e, e.homeX, e.homeY, 260)
+    }
+    popup(s, e.x, e.y - 48, poison ? 'GIFT' : 'BONG')
+  } else if (poison) {
+    e.reel = 1.45
+    e.reelTo = 'shower'
+    shove(e, SHOWER.x, SHOWER.y, 460)
+    popup(s, e.x, e.y - 48, 'IN DIE DUSCHE')
+  } else if (weapon === 'bat') {
+    e.reel = 0
+    e.reelTo = 'cellar'
     e.vx = Math.cos(s.player.swingFacing) * 560
     e.vy = Math.sin(s.player.swingFacing) * 560
     popup(s, e.x, e.y - 48, 'BONG')
   } else if (wasDizzy) {
     e.reel = 1.35
-    const dx = CELLAR.x - e.x
-    const dy = CELLAR.y - e.y
-    const d = Math.hypot(dx, dy) || 1
-    e.vx = (dx / d) * 420
-    e.vy = (dy / d) * 420
+    e.reelTo = 'cellar'
+    shove(e, CELLAR.x, CELLAR.y, 420)
     popup(s, e.x, e.y - 48, 'IN DEN KELLER')
   } else {
     e.reel = 0
-    const dx = s.player.x - e.x
-    const dy = s.player.y - e.y
-    const d = Math.hypot(dx, dy) || 1
-    e.vx = (dx / d) * 280
-    e.vy = (dy / d) * 280
+    shove(e, s.player.x, s.player.y, 280)
     popup(s, e.x, e.y - 48, 'ZACK')
   }
   s.score += 25
   s.shake = Math.max(s.shake, weapon === 'bat' ? 5 : 3.5)
   events.push({ type: 'hit', weapon })
-  burst(s, e.x, e.y - 10, 10, ['#f8fbff', '#bfdbfe', '#ffffff', '#93c5fd'])
+  burst(s, e.x, e.y - 10, 8, ['#f8fbff', '#bfdbfe', '#ffffff'])
 }
 
 function applySwing(s: GameState, events: GameEvent[]) {
@@ -336,13 +417,18 @@ function applySwing(s: GameState, events: GameEvent[]) {
   if (whipTarget) connectHit(s, whipTarget, events)
 }
 
-function beginSuck(e: Enemy) {
-  if (e.sucking) return
+function beginSuck(e: Enemy, spot: LockSpot) {
+  if (e.sucking || e.kind !== 'netan') return
   e.sucking = true
+  e.lockSpot = spot
   e.suck = 0
   e.vx = 0
   e.vy = 0
   e.reel = 0
+}
+
+function spotOf(e: Enemy) {
+  return e.lockSpot === 'shower' ? SHOWER : CELLAR
 }
 
 function finishSuck(s: GameState, e: Enemy, events: GameEvent[]) {
@@ -353,10 +439,12 @@ function finishSuck(s: GameState, e: Enemy, events: GameEvent[]) {
   else s.combo = 1
   s.comboT = 3.3
   s.score += 100 * s.combo
-  s.cellarSlam = 0.38
+  const spot = spotOf(e)
+  if (e.lockSpot === 'cellar') s.cellarSlam = 0.38
   s.shake = Math.max(s.shake, 6)
-  popup(s, CELLAR.x, CELLAR.y - 70, s.combo > 1 ? `KELLER x${s.combo}` : 'EINGESPERRT')
-  burst(s, CELLAR.x, CELLAR.y, 16, ['#f8fbff', '#dbeafe', '#ffffff', '#60a5fa'])
+  const label = e.lockSpot === 'shower' ? (s.combo > 1 ? `DUSCHE x${s.combo}` : 'DUSCHE') : s.combo > 1 ? `KELLER x${s.combo}` : 'EINGESPERRT'
+  popup(s, spot.x, spot.y - 70, label)
+  burst(s, spot.x, spot.y, 14, e.lockSpot === 'shower' ? ['#bbf7d0', '#f8fbff', '#86efac'] : ['#f8fbff', '#dbeafe', '#ffffff'])
   events.push({ type: 'lock', combo: s.combo })
   const idx = s.enemies.indexOf(e)
   if (idx >= 0) s.enemies.splice(idx, 1)
@@ -383,20 +471,49 @@ function updateEnemy(s: GameState, e: Enemy, events: GameEvent[], dt: number) {
   e.enter = Math.max(0, e.enter - dt)
   if (Math.abs(e.tilt) > 0.02) e.tilt *= Math.exp(-1.4 * dt)
 
+  if (e.bottleCd > 0) e.bottleCd = Math.max(0, e.bottleCd - dt)
+  if (e.poison > 0 && !e.sucking) {
+    e.poison -= dt
+    e.toxin -= dt
+    if (e.toxin <= 0) {
+      e.toxin = 0.55
+      e.flash = 0.14
+      e.dizzy = Math.max(e.dizzy, e.kind === 'netan' ? 1.4 : 0.9)
+      if (e.kind === 'netan') {
+        e.reel = Math.max(e.reel, 0.9)
+        e.reelTo = 'shower'
+      }
+      s.score += 8
+      burst(s, e.x, e.y - 12, 3, ['#4ade80', '#86efac'])
+    }
+    if (e.poison < 0) e.poison = 0
+  }
+
   if (e.sucking) {
+    const spot = spotOf(e)
     e.suck += dt / 0.38
-    e.x += (CELLAR.x - e.x) * Math.min(1, dt * 8)
-    e.y += (CELLAR.y - e.y) * Math.min(1, dt * 8)
+    e.x += (spot.x - e.x) * Math.min(1, dt * 8)
+    e.y += (spot.y - e.y) * Math.min(1, dt * 8)
     if (e.suck >= 1) finishSuck(s, e, events)
+    return
+  }
+
+  if (e.kind === 'insel') {
+    e.x += (e.homeX - e.x) * Math.min(1, dt * 3)
+    e.y += (e.homeY - e.y) * Math.min(1, dt * 3)
+    e.vx = 0
+    e.vy = 0
+    if (e.dizzy > 0) e.dizzy -= dt
     return
   }
 
   if (e.dizzy > 0) {
     e.dizzy -= dt
-    if (e.reel > 0) {
+    if (e.reel > 0 && e.kind === 'netan') {
       e.reel -= dt
-      const dx = CELLAR.x - e.x
-      const dy = CELLAR.y - e.y
+      const goal = e.reelTo === 'shower' ? SHOWER : CELLAR
+      const dx = goal.x - e.x
+      const dy = goal.y - e.y
       const d = Math.hypot(dx, dy) || 1
       e.vx = (dx / d) * 420
       e.vy = (dy / d) * 420
@@ -425,7 +542,52 @@ function updateEnemy(s: GameState, e: Enemy, events: GameEvent[], dt: number) {
       e.vx = 0
       e.vy = 0
     }
-    if (Math.hypot(e.x - CELLAR.x, e.y - CELLAR.y) < CELLAR.r) beginSuck(e)
+    if (e.kind === 'netan') {
+      if (Math.hypot(e.x - SHOWER.x, e.y - SHOWER.y) < SHOWER.r) beginSuck(e, 'shower')
+      else if (Math.hypot(e.x - CELLAR.x, e.y - CELLAR.y) < CELLAR.r) beginSuck(e, 'cellar')
+    }
+    return
+  }
+
+  if (e.kind === 'putin') {
+    const dx = e.homeX - e.x
+    const dy = e.homeY - e.y
+    const home = Math.hypot(dx, dy)
+    const pdx = s.player.x - e.x
+    const pdy = s.player.y - e.y
+    const pd = Math.hypot(pdx, pdy) || 1
+    if (pd < 110 && home < 70) {
+      e.vx = (pdx / pd) * 54
+      e.vy = (pdy / pd) * 54
+    } else {
+      e.vx = dx * 1.4
+      e.vy = dy * 1.4
+    }
+    e.x += e.vx * dt
+    e.y += e.vy * dt
+    if (e.enter > 0 || s.phase !== 'playing') return
+    const gap = Math.hypot(s.player.x - e.x, s.player.y - e.y) || 1
+    if (gap < s.player.radius + e.radius - 2 && s.player.invuln <= 0) {
+      const nx = (s.player.x - e.x) / gap
+      const ny = (s.player.y - e.y) / gap
+      s.lives -= 1
+      s.player.invuln = 1.15
+      s.player.flash = 0.28
+      s.shake = Math.max(s.shake, 8)
+      s.player.x += nx * 30
+      s.player.y += ny * 30
+      popup(s, s.player.x, s.player.y - 36, 'AUTSCH')
+      events.push({ type: 'hurt' })
+      if (s.lives <= 0) {
+        s.phase = 'gameover'
+        const isBest = s.score > s.best
+        if (isBest) s.best = s.score
+        events.push({ type: 'over', score: s.score, best: isBest })
+      }
+      const parked = clampFloor(s.player.x, s.player.y, s.player.radius * 0.2)
+      s.player.x = parked.x
+      s.player.y = parked.y
+    }
     return
   }
 
@@ -606,13 +768,14 @@ export function updateGame(s: GameState, input: InputState, dt: number): GameEve
     if (s.phase === 'playing') {
       separateEnemies(s)
       s.spawnIn -= dt
-      const alive = s.enemies.filter((e) => !e.sucking).length
+      const netans = s.enemies.filter((e) => e.kind === 'netan')
+      const alive = netans.filter((e) => !e.sucking).length
       if (s.toSpawn > 0 && alive < s.maxAlive && s.spawnIn <= 0) {
         spawnEnemy(s)
         s.spawnIn = Math.max(0.62, 2.05 - s.round * 0.12)
       }
-      const busy = s.enemies.some((e) => e.sucking)
-      if (s.toSpawn <= 0 && s.lockedRound >= s.goal && !busy && s.enemies.length === 0) {
+      const busy = netans.some((e) => e.sucking)
+      if (s.toSpawn <= 0 && s.lockedRound >= s.goal && !busy && netans.length === 0) {
         s.phase = 'roundclear'
         s.banner = 2.15
         s.score += 50 * s.round

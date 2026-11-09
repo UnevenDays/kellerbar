@@ -79,6 +79,10 @@ export function createAudio() {
       try {
         if (event.type === 'swing') swing(event.weapon)
         else if (event.type === 'hit') tone(event.weapon === 'bat' ? 210 : 520, 0.08, 'square', 0.05, 140)
+        else if (event.type === 'bottle') {
+          tone(660, 0.08, 'sine', 0.06, 880)
+          tone(990, 0.1, 'triangle', 0.04, undefined, 0.06)
+        } else if (event.type === 'poison') tone(240, 0.16, 'triangle', 0.05, 90)
         else if (event.type === 'lock') {
           tone(523, 0.12, 'triangle', 0.07)
           tone(659, 0.14, 'triangle', 0.07, undefined, 0.08)
