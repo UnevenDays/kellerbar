@@ -4,6 +4,8 @@ Ein Tablet-Spiel für die Nachtschicht. Die Bar ist weiß und blau. Die Gegner h
 
 ## Spielen
 
+Eigenes Spiel, getrennt von Bastion Breach: [https://unevendays.github.io/kellerbar/](https://unevendays.github.io/kellerbar/)
+
 ```bash
 npm install
 npm run dev
