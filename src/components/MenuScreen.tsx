@@ -80,6 +80,13 @@ export function MenuScreen({
           Auf dem Tablet: links laufen, rechts schlagen. Tippen auf die Bar zielt.
           Tastatur: WASD, Leertaste, Q wechselt die Waffe.
         </p>
+        {window.location.pathname.includes('/kellerbar') ? (
+          <p className="mt-3 text-center">
+            <a className="text-sm font-semibold text-[#1d4ed8] underline" href="../index.html">
+              Zurück zu Bastion Breach
+            </a>
+          </p>
+        ) : null}
       </section>
     </main>
   )
