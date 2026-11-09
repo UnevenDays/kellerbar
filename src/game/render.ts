@@ -249,12 +249,7 @@ function drawDoor(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.strokeStyle = '#f8fbff'
   ctx.lineWidth = 2
   ctx.stroke()
-  drawStar(ctx, 0, -6, 6, '#f8fbff')
-  ctx.fillStyle = '#dbeafe'
-  ctx.font = '700 9px "Geist Variable", sans-serif'
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText('EINGANG', 0, 18)
+  drawStar(ctx, 0, 0, 7, '#f8fbff')
   ctx.restore()
 }
 
