@@ -2,7 +2,14 @@ export function StarIcon({ className, filled = true }: { className?: string; fil
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <polygon
-        points="12,2 14.9,8.8 22,9.3 16.8,14.1 18.4,21.4 12,17.4 5.6,21.4 7.2,14.1 2,9.3 9.1,8.8"
+        points="12,2 21.2,18 2.8,18"
+        fill={filled ? 'currentColor' : 'none'}
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <polygon
+        points="12,22 2.8,6 21.2,6"
         fill={filled ? 'currentColor' : 'none'}
         stroke="currentColor"
         strokeWidth="1.6"

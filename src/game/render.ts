@@ -36,28 +36,22 @@ export function screenToWorld(clientX: number, clientY: number, canvas: HTMLCanv
   }
 }
 
-function starPath(ctx: CanvasRenderingContext2D, r: number) {
-  ctx.beginPath()
-  for (let i = 0; i < 5; i++) {
-    const outer = -Math.PI / 2 + (i * 2 * Math.PI) / 5
-    const inner = outer + Math.PI / 5
-    const ox = Math.cos(outer) * r
-    const oy = Math.sin(outer) * r
-    const ix = Math.cos(inner) * r * 0.4
-    const iy = Math.sin(inner) * r * 0.4
-    if (i === 0) ctx.moveTo(ox, oy)
-    else ctx.lineTo(ox, oy)
-    ctx.lineTo(ix, iy)
-  }
-  ctx.closePath()
-}
-
 function drawStar(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, fill: string) {
   ctx.save()
   ctx.translate(x, y)
-  starPath(ctx, r)
   ctx.fillStyle = fill
-  ctx.fill()
+  for (const rot of [-Math.PI / 2, Math.PI / 2]) {
+    ctx.beginPath()
+    for (let i = 0; i < 3; i++) {
+      const angle = rot + (i * 2 * Math.PI) / 3
+      const px = Math.cos(angle) * r
+      const py = Math.sin(angle) * r
+      if (i === 0) ctx.moveTo(px, py)
+      else ctx.lineTo(px, py)
+    }
+    ctx.closePath()
+    ctx.fill()
+  }
   ctx.restore()
 }
 
@@ -178,6 +172,9 @@ function drawFloor(ctx: CanvasRenderingContext2D) {
       const alt = ((x / tile) | 0) + ((y / tile) | 0)
       ctx.fillStyle = alt % 2 === 0 ? 'rgba(248,251,255,0.07)' : 'rgba(7,20,51,0.08)'
       ctx.fillRect(x, y, tile, tile)
+      ctx.globalAlpha = 0.72
+      drawStar(ctx, x + tile / 2, y + tile / 2, 16, '#f8fbff')
+      ctx.globalAlpha = 1
     }
   }
   ctx.restore()
