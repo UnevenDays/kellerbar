@@ -397,7 +397,7 @@ function drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy, state: GameState) {
   ctx.scale(scale, scale)
   ctx.translate(-e.x, -(e.y + bob))
   shadow(ctx, e.x, e.y + bob)
-  const tone = e.kind === 'insel' ? '#1e3a5f' : e.kind === 'putin' ? '#334155' : e.shade > 0.5 ? '#1e3a8a' : '#2563eb'
+  const tone = e.kind === 'pinsel' ? '#1e3a5f' : e.kind === 'putin' ? '#334155' : e.shade > 0.5 ? '#1e3a8a' : '#2563eb'
   drawBody(
     ctx,
     e.x,
@@ -426,7 +426,7 @@ function drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy, state: GameState) {
       drawStar(ctx, e.x + Math.cos(a) * 24, e.y + bob - 36 + Math.sin(a) * 7, 4.5, '#f8fbff')
     }
   }
-  const plate = e.kind === 'insel' ? 'Insel' : e.kind === 'putin' ? 'Putinnn' : 'Netanjahuuu'
+  const plate = e.kind === 'pinsel' ? 'Pinsel' : e.kind === 'putin' ? 'Putinnn' : 'Netanjahuuu'
   drawName(ctx, e.x, e.y + bob - 58, plate)
   ctx.restore()
 }
@@ -462,7 +462,7 @@ function drawBody(
     ctx.fillStyle = '#1d4ed8'
     ctx.fillRect(x - 3, y - 8, 6, 24)
     drawStar(ctx, x, y + 2, 4, '#1d4ed8')
-  } else if (look === 'insel') {
+  } else if (look === 'pinsel') {
     ctx.fillStyle = '#f8fbff'
     ctx.fillRect(x - 14, y - 2, 28, 4)
     ctx.fillRect(x - 4, y - 6, 8, 16)
@@ -516,11 +516,9 @@ function drawBody(
   ctx.beginPath()
   ctx.arc(x, y - 13, 4, 0.2, Math.PI - 0.2)
   ctx.stroke()
-  if (look === 'insel') {
-    ctx.fillStyle = '#3a2a22'
-    ctx.fillRect(x - 8, y - 14, 16, 3)
-    ctx.fillRect(x - 9, y - 16, 3, 5)
-    ctx.fillRect(x + 6, y - 16, 3, 5)
+  if (look === 'pinsel') {
+    ctx.fillStyle = '#2a211c'
+    ctx.fillRect(x - 4, y - 16, 8, 5)
     drawCap(ctx, x, y - 28)
   } else if (look === 'netan') {
     drawTopHat(ctx, x, y - 30, tilt)

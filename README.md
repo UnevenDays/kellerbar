@@ -1,6 +1,6 @@
 # Kellerbar
 
-Ein Tablet-Spiel für die Nachtschicht. Die Bar ist weiß und blau. Die Gegner heißen Netanjahuuu und tragen Zylinderhüte. In der Dusche stehen schnurrbärtige Insel in Uniform; ein Treffer gibt eine Giftflasche, mit der Netanjahuuus in die Dusche taumeln. In den Boxen stehen glatzköpfige Putinnn. Schläger und Peitsche sperren benommene Netanjahuuus in den Keller.
+Ein Tablet-Spiel für die Nachtschicht. Die Bar ist weiß und blau. Die Gegner heißen Netanjahuuu und tragen Zylinderhüte. In der Dusche stehen Pinsel mit Pinselschnurrbart und Uniform; ein Treffer gibt eine Giftflasche, mit der Netanjahuuus in die Dusche taumeln. In den Boxen stehen glatzköpfige Putinnn. Schläger und Peitsche sperren benommene Netanjahuuus in den Keller.
 
 ## Spielen
 

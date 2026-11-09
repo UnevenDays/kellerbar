@@ -76,10 +76,10 @@ for (let i = 0; i < 50 && clear.phase === 'playing'; i++) {
 assert(clear.phase === 'roundclear', `Runde endet nicht, phase=${clear.phase}`)
 
 const gift = createGame('bat', 0, 11)
-const insel = gift.enemies.find((enemy) => enemy.kind === 'insel')
-if (!insel) throw new Error('Insel fehlt in der Dusche')
-gift.player.x = insel.x - 50
-gift.player.y = insel.y
+const pinsel = gift.enemies.find((enemy) => enemy.kind === 'pinsel')
+if (!pinsel) throw new Error('Pinsel fehlt in der Dusche')
+gift.player.x = pinsel.x - 50
+gift.player.y = pinsel.y
 gift.player.facing = 0
 for (let i = 0; i < 24; i++) updateGame(gift, input({ strike: i === 0 }), 1 / 60)
 assert(gift.bottles === 1, `Flasche fehlt, bottles=${gift.bottles}`)

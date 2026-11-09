@@ -8,7 +8,7 @@ export const BOXES = [
 ] as const
 
 export type Weapon = 'bat' | 'whip'
-export type Crew = 'netan' | 'insel' | 'putin'
+export type Crew = 'netan' | 'pinsel' | 'putin'
 export type LockSpot = 'cellar' | 'shower'
 export type Phase = 'playing' | 'roundclear' | 'gameover'
 
@@ -232,8 +232,8 @@ export function createGame(weapon: Weapon, best: number, seed = 0x4b454c4c): Gam
 
 function placeFixtures(s: GameState) {
   const spots: Array<{ kind: Crew; x: number; y: number }> = [
-    { kind: 'insel', x: 118, y: 258 },
-    { kind: 'insel', x: 172, y: 324 },
+    { kind: 'pinsel', x: 118, y: 258 },
+    { kind: 'pinsel', x: 172, y: 324 },
     { kind: 'putin', x: BOXES[0].x, y: BOXES[0].y },
     { kind: 'putin', x: BOXES[1].x, y: BOXES[1].y },
   ]
@@ -323,7 +323,7 @@ function connectHit(s: GameState, e: Enemy, events: GameEvent[]) {
   e.flash = 0.16
   e.tilt = (rnd(s) - 0.5) * 1.1
   e.enter = 0
-  if (e.kind === 'insel') {
+  if (e.kind === 'pinsel') {
     e.dizzy = Math.max(e.dizzy, 0.7)
     shove(e, e.homeX, e.homeY, 80)
     if (e.bottleCd <= 0) {
@@ -498,7 +498,7 @@ function updateEnemy(s: GameState, e: Enemy, events: GameEvent[], dt: number) {
     return
   }
 
-  if (e.kind === 'insel') {
+  if (e.kind === 'pinsel') {
     e.x += (e.homeX - e.x) * Math.min(1, dt * 3)
     e.y += (e.homeY - e.y) * Math.min(1, dt * 3)
     e.vx = 0

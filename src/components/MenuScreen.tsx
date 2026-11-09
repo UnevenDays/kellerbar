@@ -42,12 +42,12 @@ export function MenuScreen({
         </p>
         <h1 className="text-4xl font-black tracking-tight sm:text-5xl">Kellerbar</h1>
         <p className="mt-3 text-base leading-relaxed text-[#243868]">
-          Die Bar ist weiß und blau. In der Dusche stehen Männer mit Schnurrbart und Uniform, Namensschild Insel.
+          Die Bar ist weiß und blau. In der Dusche stehen Pinsel mit Pinselschnurrbart und Uniform.
           Ein Treffer gibt eine Giftflasche. Vergiftete Netanjahuuus taumeln in die Dusche. In den Boxen stehen
           glatzköpfige Putinnn, die du ebenfalls schlagen kannst.
         </p>
         <ol className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
-          <li className="rounded-2xl bg-white/80 px-3 py-2">1. Insel schlagen, Flasche nehmen</li>
+          <li className="rounded-2xl bg-white/80 px-3 py-2">1. Pinsel schlagen, Flasche nehmen</li>
           <li className="rounded-2xl bg-white/80 px-3 py-2">2. Netanjahuuu vergiften</li>
           <li className="rounded-2xl bg-white/80 px-3 py-2">3. In Dusche oder Keller sperren</li>
         </ol>
